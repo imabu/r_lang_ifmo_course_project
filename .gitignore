@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+/data/prepared/*
+/data/source/*
+/data/temp/*
+/data/test/*
