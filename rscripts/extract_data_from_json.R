@@ -29,6 +29,7 @@ load_json_file <- function(path_to_file) {
   RJSONIO::fromJSON(path_to_file, encoding = 'UTF-8')
 }
 
+
 grab_info <- function(One_row) {
   ret <- list(
     "Name" = One_row$data$general$name,
@@ -37,7 +38,7 @@ grab_info <- function(One_row) {
     "IsFree" = One_row$data$general$isFree,
     "Price" = One_row$data$general$price,
     "MaxPrice" = One_row$data$general$maxPrice,
-    "Category" = One_row$data$general$category['name'],
+    "Category" = (One_row$data$general$category['name'])[[1]],
     "Status" = One_row$data$general$status,
     "StartDtm" = One_row$data$general$start,
     "EndDttm" = One_row$data$general$end,
@@ -82,6 +83,7 @@ get_df_from_temp_parts <- function(curr_temp_dir) {
   files_pathes <- list.files(curr_temp_dir, full.names = TRUE)
   result_df <- init_df
   for (file in files_pathes) {
+    print(file)
     df <- readRDS(file)
     result_df <- dplyr::union(result_df, df)
   }
@@ -103,10 +105,11 @@ get_data_from_dir <-  function(path_to_dir, save.parts = TRUE, save.result = TRU
   }
   if (save.result) {
     resul_filename <- dplyr::coalesce(c(as.character(save.result.file)), as.character(Sys.time(), format = "%Y%m%d%H%M%S"))
-    saveRDS(resul_df, file =  file.path(PATH_TO_RESULT, resul_filename))
+    saveRDS(resul_df, file =  file.path(PATH_TO_RESULT, paste0(resul_filename, ".rds")))
   }
   resul_df
 }
+
 
 
 
