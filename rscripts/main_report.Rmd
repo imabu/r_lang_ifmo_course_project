@@ -1,0 +1,122 @@
+---
+title: "Итоговый проект"
+author: "Кучаева Карина"
+output: 
+  html_document:
+    css: minty.css
+---
+
+<style type="text/css">
+h1.title {
+  text-align: center;
+}
+h4.author { 
+  text-align: center;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r echo=FALSE, message = FALSE}
+source('.\\rscripts\\extract_data_from_json.R')
+source('.\\rscripts\\preprocess.R')
+```
+
+## Описание данных
+
+Сведения о события и мероприятиях в сфере культуры, данные о которых внесены в автоматизированную информационную систему "Единое информационное пространство в сфере культуры" 
+
+Дата актаульности: 21.01.2020
+
+Источник: данные Министерства Культуры РФ https://opendata.mkrf.ru/opendata/7705851331-events
+
+### Загрузка
+Загрузка данных осуществляется с помощью функции get_data_from_dir из extract_data_from_json.R
+`parsed_data <- get_data_from_dir('.\\data\\source\\data-15-structure-2')`
+
+Так как функция может сохранять получившийся dataframe, для дальнейшей работы можно использовать ранее полученный результат:
+```{r}
+parsed_data <- readRDS('.\\data\\prepared\\20200121220605.rds')
+df <- preprocess(parsed_data)
+summary(df)
+```
+
+## Визуализация
+
+```{r}
+library(ggplot2)
+library(scales)
+
+df %>% 
+  mutate(StartYear = format(StartDttm, "%Y")) %>% 
+  mutate(duration_days = difftime(EndDttm, StartDttm, units = 'days')) %>% 
+  filter(duration_days >=1 & duration_days <= 365 ) %>% 
+  ggplot(aes(y=Price, x=duration_days, color=Category)) + 
+    geom_point(alpha=0.7) +
+    facet_wrap(~ StartYear) +
+    labs(y='Цена', 
+         x='Длительность', 
+         color='Категория мероприятия',
+         title='Цена и длительность мероприятия',
+         subtitle='2017 - 2019 гг') +
+    theme_light() 
+
+```
+
+```{r}
+df %>% 
+  mutate(StratYear = format(StartDttm, "%Y")) %>% 
+  ggplot(aes(x=StratYear)) +
+  geom_bar(aes(fill=AgeRestriction), position='fill') +
+  labs(y='', 
+         x='Год', 
+         fill='Ограничение по возрасту',
+         title='Процент мероприятий с разными возрастными ограничениями',
+         subtitle='2017 - 2019 гг') +
+  theme_light() 
+```
+
+
+```{r}
+df %>% 
+  mutate(duration_days = difftime(EndDttm, StartDttm, units = 'days')) %>% 
+  filter(duration_days >=1 & duration_days <= 365 ) %>% 
+  ggplot(aes(x=AgeRestriction)) +
+  geom_bar(aes(fill=Category), position='fill') +
+  labs(y='', 
+         x='Возрастное ограничение', 
+         fill='Категория мероприятия',
+         title='Категории мероприятий с разными возрастными ограничениями',
+         subtitle='2017 - 2019 гг') +
+  theme_light()
+```
+
+
+### Карта с данными за 2019 год
+```{r}
+library(leaflet)
+
+df_for_map <- df %>% 
+  filter(StartDttm >= '2019-01-01 00:00:00')
+
+labels <- sprintf(
+  "<strong>%s</strong><br/>%s",
+  df_for_map$Name, df_for_map$PlaceName
+) %>% lapply(htmltools::HTML)
+
+
+my_map <- df_for_map %>% 
+  leaflet() %>% 
+  addTiles %>% 
+  addMarkers(lat = ~Lat, lng = ~Lng, 
+             clusterOptions = markerClusterOptions(), 
+             label = labels, 
+             labelOptions = labelOptions(
+    style = list("font-weight" = "normal", padding = "3px 8px"),
+    textsize = "15px",
+    direction = "auto"))
+my_map
+```

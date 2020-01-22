@@ -5,7 +5,8 @@ PATH_TO_RESULT = '.\\data\\prepared'
 
 ####### Useful variable #######
 
-init_df <- data.frame(
+init_df <- function() {
+  data.frame(
   Name = character(),
   ShortDescription = character(),
   AgeRestriction = character(),
@@ -22,7 +23,7 @@ init_df <- data.frame(
   CoordinateY = character(),
   stringsAsFactors = FALSE
 )
-
+}
 ####### Working with JSON #######
 
 load_json_file <- function(path_to_file) {
@@ -74,14 +75,14 @@ create_temp_dir <- function(save.parts = TRUE) {
 save_part <- function(resul_df, curr_temp_dir, file, save.parts = TRUE) {
     if (save.parts) {
       saveRDS(resul_df, file =  file.path(curr_temp_dir, gsub("json", "rds", basename(file))))
-      resul_df <- init_df
+      resul_df <- init_df()
     }
     resul_df
   }
 
 get_df_from_temp_parts <- function(curr_temp_dir) {
   files_pathes <- list.files(curr_temp_dir, full.names = TRUE)
-  result_df <- init_df
+  result_df <- init_df()
   for (file in files_pathes) {
     print(file)
     df <- readRDS(file)
@@ -94,7 +95,7 @@ get_df_from_temp_parts <- function(curr_temp_dir) {
 get_data_from_dir <-  function(path_to_dir, save.parts = TRUE, save.result = TRUE, save.result.file = NA) {
   curr_temp_dir <- create_temp_dir(save.parts)
   files_pathes <- list.files(path_to_dir, full.names = TRUE)
-  resul_df <- init_df
+  resul_df <- init_df()
   for (file in files_pathes) {
     json_file <- load_json_file(file)
     resul_df <- extract(json_file, resul_df)
